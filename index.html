@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="day">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#050816" />
+
+    <title>Nourchene HAMRITA — Full-Stack Engineer</title>
+    <link rel="stylesheet" href="./src/style.scss" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <meta name="description" content="Nourchene Hamrita — Full-Stack Engineer portfolio. Explore a 3D developer workspace." />
+    <meta property="og:title" content="Nourchene Hamrita — Full-Stack Engineer" />
+    <meta property="og:description" content="A futuristic 3D developer workspace portfolio built with Three.js." />
+    <meta property="og:type" content="website" />
+
+    <link rel="icon" type="image/svg+xml" href="/logo.png" />
+  </head>
+  <body>
+    <!-- ============= Loading screen ============= -->
+    <div class="loading-screen" id="loading-screen">
+      <div class="loading-card">
+        <div class="loading-logo">
+          <span class="logo-bracket">&#123;&lt;&#125;</span>
+          <span class="logo-slash">/</span>
+          <span class="logo-bracket">&#123;&gt;&#125;</span>
+        </div>
+        <h1 class="loading-title">Nourchene Hamrita</h1>
+        <p class="loading-subtitle">Full-Stack Engineer · Building the portfolio…</p>
+        <div class="loading-bar">
+          <div class="loading-bar-fill" id="loading-bar-fill"></div>
+        </div>
+        <p class="loading-percent" id="loading-percent">0%</p>
+        <button class="enter-button" id="enter-button" disabled>Enter workspace</button>
+        <p class="loading-tip">Tip: use left/right click + scroll to navigate · or one/two fingers on mobile</p>
+      </div>
+    </div>
+
+    <!-- ============= Top bar ============= -->
+    <header class="topbar" id="topbar">
+      <a class="topbar-brand" href="#">
+        <span class="brand-bracket">&#123;&lt;&#125;</span>
+        <span class="brand-name">Nourchene</span>
+        <span class="brand-bracket">/&#123;&#125;</span>
+      </a>
+
+      <nav class="topbar-nav" aria-label="Primary">
+        <button class="nav-button" data-action="work">Work</button>
+        <button class="nav-button" data-action="about">About</button>
+        <button class="nav-button" data-action="contact">Contact</button>
+      </nav>
+
+      <div class="topbar-actions">
+        <button class="icon-button theme-toggle" id="theme-toggle" aria-label="Toggle day / cyberpunk mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="icon-button sound-toggle" id="sound-toggle" aria-label="Toggle sound">
+          <svg class="icon-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          <svg class="icon-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============= Floating interaction hint ============= -->
+    <div class="hover-hint" id="hover-hint" aria-hidden="true">
+      <span class="hover-hint-text">Click to explore</span>
+    </div>
+
+    <!-- ============= 3D Canvas ============= -->
+    <div id="experience">
+      <canvas id="experience-canvas" class="experience-canvas"></canvas>
+    </div>
+
+    <!-- ============= Modals ============= -->
+
+    <!-- WORK -->
+    <div class="modal" data-modal="work" id="modal-work" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-card">
+        <button class="modal-close" data-modal-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="modal-header">
+          <p class="modal-eyebrow">~ Featured Work ~</p>
+          <h2 class="modal-title">Things I've built</h2>
+          <p class="modal-subtitle">A selection of full-stack, mobile, and AI experiments — click any project for details.</p>
+        </div>
+        <div class="modal-body work-grid" id="work-grid">
+          <!-- project cards injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ABOUT -->
+    <div class="modal" data-modal="about" id="modal-about" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-card">
+        <button class="modal-close" data-modal-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="modal-header about-header">
+          <div class="about-avatar" id="about-avatar">NH</div>
+          <div>
+            <p class="modal-eyebrow">~ About Me ~</p>
+            <h2 class="modal-title">Engineer, builder, and lifelong learner 💜</h2>
+            <p class="modal-subtitle">Düsseldorf, Germany · Software Engineering graduate</p>
+          </div>
+        </div>
+        <div class="modal-body about-body">
+          <p>
+            Hi, I'm <strong>Nourchene Hamrita</strong>, a recent Software Engineering graduate with a strong foundation
+            in web and mobile development, and low-code platforms. I enjoy solving problems, learning new technologies,
+            and working in collaborative environments.
+          </p>
+          <p>
+            My goal is to contribute to innovative projects while continuously improving my skills. I love taking an
+            idea from concept to production — designing the architecture, building the UI, wiring the backend, and
+            shipping it.
+          </p>
+
+          <h3>What I'm up to</h3>
+          <ul class="about-list">
+            <li>Building full-stack products with <strong>React</strong>, <strong>Node.js</strong>, <strong>TypeScript</strong> & <strong>PostgreSQL</strong>.</li>
+            <li>Shipping mobile apps with <strong>React Native</strong> and exploring <strong>AI / intelligent agents</strong>.</li>
+            <li>Working in agile teams — certified <strong>Scrum Fundamentals (SFC)</strong>.</li>
+          </ul>
+
+          <h3>Toolbox</h3>
+          <div class="skills-grid" id="skills-grid">
+            <!-- skill chips injected by JS -->
+          </div>
+
+          <h3>Experience</h3>
+          <div class="timeline" id="timeline">
+            <!-- timeline items injected by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACT -->
+    <div class="modal" data-modal="contact" id="modal-contact" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-card modal-card-narrow">
+        <button class="modal-close" data-modal-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="modal-header">
+          <p class="modal-eyebrow">~ Say hello ~</p>
+          <h2 class="modal-title">Let's build something together</h2>
+          <p class="modal-subtitle">If you have a project, an opportunity, or just want to say hi — my inbox is open.</p>
+        </div>
+        <div class="modal-body contact-body">
+          <a class="contact-card" href="mailto:hamritanourchene@gmail.com">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <p class="contact-label">Email</p>
+              <p class="contact-value">hamritanourchene@gmail.com</p>
+            </div>
+          </a>
+          <a class="contact-card" href="https://www.linkedin.com/in/nourchene-hamrita/" target="_blank" rel="noopener noreferrer">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"/></svg>
+            </div>
+            <div>
+              <p class="contact-label">LinkedIn</p>
+              <p class="contact-value">linkedin.com/in/nourchene-hamrita</p>
+            </div>
+          </a>
+          <a class="contact-card" href="https://github.com/nourchene-hamrita" target="_blank" rel="noopener noreferrer">
+            <div class="contact-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            </div>
+            <div>
+              <p class="contact-label">GitHub</p>
+              <p class="contact-value">github.com/nourchene-hamrita</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECT DETAIL (sub-modal) -->
+    <div class="modal modal-detail" data-modal="project" id="modal-project" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-card">
+        <button class="modal-close" data-modal-close aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="modal-body" id="project-detail-body">
+          <!-- project details injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

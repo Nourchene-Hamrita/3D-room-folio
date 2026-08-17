@@ -1,0 +1,52 @@
+// =============================================================
+// Nourchene Hamrita — Portfolio design tokens
+// Mirrors the dark + violet aesthetic of the current portfolio
+// =============================================================
+
+// ---------- Brand colors ----------
+$color-bg-primary: #050816;        // main dark background
+$color-bg-secondary: #100d25;      // card / surface
+$color-bg-tertiary: #151030;       // elevated surface
+$color-accent: #915eff;            // signature violet
+$color-accent-soft: #dfd9ff;       // light violet text
+$color-accent-bright: #bf61ff;     // bright purple
+$color-pink: #f272c8;              // pink highlight
+$color-cyan: #00f0ff;              // neon cyan accent
+$color-text-primary: #ffffff;
+$color-text-muted: #aaa6c3;        // secondary text
+$color-text-faint: #6c6a87;
+
+// Day / cyberpunk theme overrides (driven by [data-theme] on <html>)
+$day-bg-1: #f5f3ff;                // light lavender
+$day-bg-2: #ece8ff;
+$day-text: #1a1530;
+$day-text-muted: #5a527b;
+$day-accent: #6b3fff;
+$day-surface: rgba(255, 255, 255, 0.7);
+$day-border: rgba(107, 63, 255, 0.2);
+
+// Shadows
+$shadow-glow-violet: 0 0 32px rgba(145, 94, 255, 0.45);
+$shadow-glow-pink: 0 0 28px rgba(242, 114, 200, 0.4);
+$shadow-card: 0 24px 48px -16px rgba(0, 0, 0, 0.6);
+
+// Typography
+$font-primary: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+$font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+// Spacing
+$radius-sm: 8px;
+$radius-md: 14px;
+$radius-lg: 22px;
+$radius-pill: 999px;
+
+// Transitions
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+$ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+// Z-index scale
+$z-canvas: 0;
+$z-overlay: 50;
+$z-topbar: 100;
+$z-modal: 200;
+$z-toast: 300;
