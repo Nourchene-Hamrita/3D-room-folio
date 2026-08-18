@@ -77,6 +77,9 @@ function boot() {
 
   // 10. Sound toggle
   setupSoundToggle();
+
+  // 11. Mobile menu toggle
+  setupMobileMenu();
 }
 
 function setupSoundToggle() {
@@ -88,6 +91,39 @@ function setupSoundToggle() {
     audio.setEnabled(!muted);
     btn.setAttribute("data-muted", String(muted));
     if (!muted) audio.click();
+  });
+}
+
+function setupMobileMenu() {
+  const toggle = document.getElementById("mobile-menu-toggle");
+  const nav = document.querySelector(".topbar-nav");
+  if (!toggle || !nav) return;
+
+  const closeMenu = () => {
+    nav.classList.remove("is-open");
+    toggle.classList.remove("is-open");
+    toggle.setAttribute("aria-expanded", "false");
+  };
+
+  toggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isOpen = nav.classList.toggle("is-open");
+    toggle.classList.toggle("is-open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+  });
+
+  nav.querySelectorAll(".nav-button").forEach((btn) => {
+    btn.addEventListener("click", closeMenu);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!nav.contains(event.target) && !toggle.contains(event.target)) {
+      closeMenu();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 720) closeMenu();
   });
 }
 

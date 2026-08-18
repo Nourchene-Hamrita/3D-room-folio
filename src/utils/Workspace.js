@@ -16,6 +16,7 @@
 // =============================================================
 
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   woodPlankTexture,
   woodDeskTexture,
@@ -1591,6 +1592,84 @@ function buildRug(scene, parent) {
 }
 
 // =============================================================
+// PLANET DISPLAY
+// =============================================================
+function buildPlanet(scene, parent) {
+  const planetGroup = new THREE.Group();
+  planetGroup.name = "PlanetDisplay";
+  planetGroup.position.set(5.25, 3.9, -4.9);
+  planetGroup.rotation.set(0.12, -0.6, -0.08);
+  planetGroup.scale.setScalar(1.35);
+  planetGroup.userData.planetMotion = {
+    baseY: planetGroup.position.y,
+    spin: 0.16,
+    float: 0.35,
+  };
+
+  const loader = new GLTFLoader();
+  loader.load(
+    "/planet/scene.gltf",
+    (gltf) => {
+      const model = gltf.scene;
+      model.traverse((object) => {
+        if (!object.isMesh) return;
+        object.castShadow = true;
+        object.receiveShadow = true;
+      });
+      model.scale.setScalar(0.95);
+      planetGroup.add(model);
+    },
+    undefined,
+    () => {
+      // Keep the room composition intact if the optional asset is unavailable.
+      const fallback = mesh(
+        new THREE.SphereGeometry(0.88, 32, 32),
+        new THREE.MeshStandardMaterial({
+          color: 0x5f9ec8,
+          roughness: 0.9,
+          emissive: 0x174c76,
+          emissiveIntensity: 0.35,
+        })
+      );
+      planetGroup.add(fallback);
+    }
+  );
+
+  const atmosphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1.02, 32, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0x62d5ff,
+      transparent: true,
+      opacity: 0.12,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+  );
+  atmosphere.scale.setScalar(1.08);
+  planetGroup.add(atmosphere);
+
+  const orbit = new THREE.Mesh(
+    new THREE.TorusGeometry(1.45, 0.018, 10, 96),
+    new THREE.MeshBasicMaterial({
+      color: 0xf272c8,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  orbit.rotation.set(0.9, 0.15, 0.35);
+  planetGroup.add(orbit);
+
+  const rimLight = new THREE.PointLight(0x42dfff, 1.4, 7, 2);
+  rimLight.position.set(-1.4, 0.8, 1.8);
+  planetGroup.add(rimLight);
+
+  parent.add(planetGroup);
+  return planetGroup;
+}
+
+// =============================================================
 // MAIN BUILD
 // =============================================================
 export function buildWorkspace(scene) {
@@ -1617,6 +1696,7 @@ export function buildWorkspace(scene) {
   const clockGroup = buildClock(scene, root);
   buildCeilingLamp(scene, root);
   buildNeonStrips(scene, root);
+  buildPlanet(scene, root);
   buildRug(scene, root);
 
   scene.add(root);

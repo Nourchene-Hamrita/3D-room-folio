@@ -21,8 +21,19 @@ export function initAnimations(app) {
   const screens = [];        // { mesh, baseEmissive, baseScale }
   const clockHands = [];     // hour / minute hands
   const cursor = null;       // cursor on monitor (created below)
+  const planets = [];        // floating planet display groups
 
   app.workspace.traverse((obj) => {
+    if (obj.userData?.planetMotion) {
+      planets.push({
+        group: obj,
+        baseY: obj.userData.planetMotion.baseY,
+        spin: obj.userData.planetMotion.spin,
+        float: obj.userData.planetMotion.float,
+        phase: Math.random() * Math.PI * 2,
+      });
+    }
+
     if (!obj.isMesh) return;
 
     // Server LEDs (sphere geometry + emissive)
@@ -134,6 +145,13 @@ export function initAnimations(app) {
 
     // Ambient particles drift
     updateParticles(particles, clock.t, delta);
+
+    // Give the planet a slow, display-like game-world motion.
+    for (const planet of planets) {
+      planet.group.rotation.y += delta * planet.spin;
+      planet.group.position.y =
+        planet.baseY + Math.sin(clock.t * planet.float + planet.phase) * 0.12;
+    }
   }
 
   return { update };
