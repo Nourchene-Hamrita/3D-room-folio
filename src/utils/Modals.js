@@ -8,11 +8,23 @@ export function initModals(app, audio) {
   // ---------- Inject project cards into the Work modal ----------
   const workGrid = document.getElementById("work-grid");
   data.projects.forEach((project) => {
-    const card = document.createElement("button");
+    const card = document.createElement("article");
     card.className = "project-card";
     card.setAttribute("data-project-id", project.id);
+    card.setAttribute("role", "button");
+    card.setAttribute("tabindex", "0");
+    const githubLink = project.links?.find((link) => link.github) ||
+      project.links?.find((link) => /github/i.test(link.label || ""));
+    const githubUrl = project.github || githubLink?.github || githubLink?.href;
     card.innerHTML = `
       <div class="project-icon">${escapeHtml(project.icon || project.title[0])}</div>
+      ${
+        githubUrl
+          ? `<a class="project-repo-link" href="${escapeAttr(githubUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeAttr(project.title)} repository on GitHub" title="Open repository on GitHub">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            </a>`
+          : ""
+      }
       <h3 class="project-title">${escapeHtml(project.title)}</h3>
       <p class="project-summary">${escapeHtml(project.summary)}</p>
       <div class="project-tags">
@@ -23,6 +35,15 @@ export function initModals(app, audio) {
       </div>
     `;
     card.addEventListener("click", () => openProject(project.id));
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openProject(project.id);
+      }
+    });
+    card.querySelector(".project-repo-link")?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
     workGrid.appendChild(card);
   });
 
@@ -40,11 +61,32 @@ export function initModals(app, audio) {
   data.experience.forEach((item) => {
     const node = document.createElement("div");
     node.className = "timeline-item";
+    const companyMark = getCompanyMark(item.company);
+    const companyLogo = item.logo
+      ? `<img src="${escapeAttr(item.logo)}" alt="${escapeAttr(item.company)} logo" />`
+      : `<span>${escapeHtml(companyMark)}</span>`;
     node.innerHTML = `
-      <p class="timeline-role">${escapeHtml(item.role)}</p>
-      <p class="timeline-company">${escapeHtml(item.company)}</p>
-      <span class="timeline-date">${escapeHtml(item.date)}</span>
-      <p class="timeline-desc">${escapeHtml(item.description)}</p>
+      <div class="timeline-marker" title="${escapeAttr(item.company)}" aria-label="${escapeAttr(item.company)} logo">${companyLogo}</div>
+      <div class="timeline-content">
+        <div class="timeline-topline">
+          <span class="timeline-date">${escapeHtml(item.date)}</span>
+          ${item.location ? `<span class="timeline-location">${escapeHtml(item.location)}</span>` : ""}
+        </div>
+        <p class="timeline-role">${escapeHtml(item.role)}</p>
+        <p class="timeline-company">${escapeHtml(item.company)}</p>
+        <ul class="timeline-desc">
+          ${(Array.isArray(item.description) ? item.description : [item.description])
+            .map((point) => `<li>${escapeHtml(point)}</li>`)
+            .join("")}
+        </ul>
+        ${
+          item.tools?.length
+            ? `<div class="timeline-tools">${item.tools
+                .map((tool) => `<span>${escapeHtml(tool)}</span>`)
+                .join("")}</div>`
+            : ""
+        }
+      </div>
     `;
     timeline.appendChild(node);
   });
@@ -123,8 +165,11 @@ export function initModals(app, audio) {
             <div class="project-detail-tags">
               ${project.links
                 .map(
-                  (l) =>
-                    `<a class="project-tag" href="${escapeAttr(l.href)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; cursor:pointer;">${escapeHtml(l.label)} →</a>`
+                    (l) => {
+                      const href = l.href || l.github;
+                      const label = l.label || "GitHub repository";
+                      return `<a class="project-tag" href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; cursor:pointer;">${escapeHtml(label)} →</a>`;
+                    }
                 )
                 .join("")}
             </div>
@@ -189,4 +234,15 @@ function escapeHtml(s) {
 
 function escapeAttr(s) {
   return escapeHtml(s);
+}
+
+function getCompanyMark(company) {
+  const words = String(company || "")
+    .replace(/[^a-zA-Z0-9 ]/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length) return "CO";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 }
