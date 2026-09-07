@@ -53,6 +53,17 @@ function syncMusicState() {
   }
 }
 
+async function resumeContext() {
+  const c = getCtx();
+  if (c?.state === "suspended") {
+    try {
+      await c.resume();
+    } catch {
+      // The next user gesture will retry the browser audio unlock.
+    }
+  }
+}
+
 function blip(freq = 600, dur = 0.08, type = "sine", gain = 0.05) {
   const c = getCtx();
   if (!c || !enabled) return;
@@ -75,18 +86,18 @@ export const audio = {
   unlock() {
     enabled = true;
     unlocked = true;
-    getCtx();
     const track = ensureMusic();
-    track.play();
+    if (!track.playing()) track.play();
+    resumeContext();
     syncMusicState();
   },
-  setEnabled(v) {
+  async setEnabled(v) {
     enabled = v;
     if (v) {
-      getCtx();
+      await resumeContext();
       const track = ensureMusic();
       if (unlocked) {
-        track.play();
+        if (!track.playing()) track.play();
       }
     } else if (music) {
       music.pause();

@@ -386,7 +386,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  overflow-y: auto;
+  padding: max(0.75rem, env(safe-area-inset-top))
+    max(0.75rem, env(safe-area-inset-right))
+    max(0.75rem, env(safe-area-inset-bottom))
+    max(0.75rem, env(safe-area-inset-left));
+  overscroll-behavior: contain;
   background: rgba(5, 8, 22, 0.7);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -412,7 +417,9 @@
 .modal-card {
   position: relative;
   width: min(960px, 100%);
-  max-height: calc(100vh - 3rem);
+  max-height: calc(100vh - 1.5rem);
+  max-height: calc(100dvh - 1.5rem);
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: linear-gradient(
@@ -466,6 +473,7 @@
 }
 
 .modal-header {
+  flex: 0 0 auto;
   padding: 2rem 2rem 1rem;
   border-bottom: 1px solid rgba(145, 94, 255, 0.12);
 
@@ -507,8 +515,11 @@
 }
 
 .modal-body {
+  min-height: 0;
   padding: 1.5rem 2rem 2rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   flex: 1;
 
   &::-webkit-scrollbar {

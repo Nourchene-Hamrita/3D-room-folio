@@ -177,8 +177,7 @@ function setupLoadingScreen() {
         screen.classList.add("is-hidden");
         runIntroAnimation();
       };
-      button.addEventListener("click", dismiss);
-      setTimeout(dismiss, 700);
+      button.addEventListener("click", dismiss, { once: true });
     }
   };
   tickProgress();
