@@ -91,6 +91,8 @@ export function initModals(app, audio) {
     timeline.appendChild(node);
   });
 
+  setupTimelineReveal(timeline);
+
   // ---------- Modal open/close logic ----------
   const modals = Array.from(document.querySelectorAll(".modal"));
 
@@ -245,4 +247,32 @@ function getCompanyMark(company) {
   if (!words.length) return "CO";
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
+}
+
+function setupTimelineReveal(timeline) {
+  const items = Array.from(timeline.querySelectorAll(".timeline-item"));
+  if (!items.length) return;
+
+  if (!("IntersectionObserver" in window)) {
+    items.forEach((item) => item.classList.add("is-visible"));
+    return;
+  }
+
+  const scrollRoot = timeline.closest(".modal-body");
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    },
+    {
+      root: scrollRoot,
+      threshold: 0.14,
+      rootMargin: "0px 0px -6% 0px",
+    }
+  );
+
+  items.forEach((item) => observer.observe(item));
 }
