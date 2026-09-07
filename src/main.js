@@ -80,6 +80,12 @@ function boot() {
 
   // 11. Mobile menu toggle
   setupMobileMenu();
+
+  // Mobile browsers can suspend audio when the tab or app is backgrounded.
+  window.addEventListener("pageshow", () => audio.resume());
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") audio.resume();
+  });
 }
 
 function setupSoundToggle() {

@@ -26,7 +26,6 @@ function ensureMusic() {
 
   music = new Howl({
     src: [musicFile],
-    html5: true,
     loop: true,
     volume: 0.35,
     preload: true,
@@ -34,6 +33,9 @@ function ensureMusic() {
       if (music) {
         music.once("unlock", () => music.play());
       }
+    },
+    onloaderror: (_id, error) => {
+      console.error("Unable to load background music:", error);
     },
   });
 
@@ -91,14 +93,14 @@ export const audio = {
     resumeContext();
     syncMusicState();
   },
-  async setEnabled(v) {
+  setEnabled(v) {
     enabled = v;
     if (v) {
-      await resumeContext();
       const track = ensureMusic();
       if (unlocked) {
         if (!track.playing()) track.play();
       }
+      resumeContext();
     } else if (music) {
       music.pause();
     }
@@ -106,6 +108,12 @@ export const audio = {
   },
   get enabled() {
     return enabled;
+  },
+  resume() {
+    if (!enabled || !unlocked) return;
+    const track = ensureMusic();
+    if (!track.playing()) track.play();
+    resumeContext();
   },
   hover() {
     blip(900, 0.05, "sine", 0.025);
