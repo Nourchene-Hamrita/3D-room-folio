@@ -27,7 +27,7 @@ export function initControls(camera, dom) {
     panSpeed: 0.6,
 
     // Auto-rotate when idle
-    autoRotate: true,
+    autoRotate: false,
     autoRotateSpeed: 0.25,
     autoRotateDelay: 4000,                // ms of idle before auto-rotate kicks in
 
@@ -45,6 +45,8 @@ export function initControls(camera, dom) {
     pointers: [],
     pinchStartDist: 0,
     pinchStartScale: 1,
+    lastTouchCenterX: 0,
+    lastTouchCenterY: 0,
     lastInteractionTime: performance.now(),
   };
 
@@ -83,10 +85,17 @@ export function initControls(camera, dom) {
 
     config.target.addScaledVector(move, config.panSpeed);
     config.panOffset.add(move.multiplyScalar(config.panSpeed));
+
+    // Keep the room as the navigable stage instead of allowing the target
+    // to drift into a wall or outside the scene after a large gesture.
+    config.target.x = THREE.MathUtils.clamp(config.target.x, -3.5, 3.5);
+    config.target.y = THREE.MathUtils.clamp(config.target.y, 0.8, 3.4);
+    config.target.z = THREE.MathUtils.clamp(config.target.z, -5.5, 0.5);
   }
 
   // ---------- Pointer events ----------
   function onPointerDown(e) {
+    if (e.pointerType === "touch") return;
     if (e.target.closest && e.target.closest(".modal.is-open, .topbar")) {
       return; // don't capture if interacting with UI
     }
@@ -99,6 +108,7 @@ export function initControls(camera, dom) {
   }
 
   function onPointerMove(e) {
+    if (e.pointerType === "touch") return;
     if (!config.isPointerDown) return;
     const dx = e.clientX - config.lastX;
     const dy = e.clientY - config.lastY;
@@ -125,6 +135,7 @@ export function initControls(camera, dom) {
   }
 
   function onPointerUp(e) {
+    if (e.pointerType === "touch") return;
     config.isPointerDown = false;
     config.pointerButton = -1;
     dom.releasePointerCapture?.(e.pointerId);
@@ -153,6 +164,7 @@ export function initControls(camera, dom) {
   }
 
   function onTouchStart(e) {
+    if (e.target.closest && e.target.closest(".modal.is-open, .topbar")) return;
     config.lastInteractionTime = performance.now();
     const t = getTouches(e);
     if (t.length === 1) {
@@ -164,7 +176,9 @@ export function initControls(camera, dom) {
       config.isPointerDown = true;
       config.pointerButton = 1; // pinch/pan
       config.pinchStartDist = touchDistance(t[0], t[1]);
-      config.pinchStartScale = config.scale;
+      config.pinchStartScale = 1;
+      config.lastTouchCenterX = (t[0].clientX + t[1].clientX) / 2;
+      config.lastTouchCenterY = (t[0].clientY + t[1].clientY) / 2;
     }
   }
 
@@ -182,20 +196,26 @@ export function initControls(camera, dom) {
       rotateUp((2 * Math.PI * dy) / h * config.rotateSpeed);
     } else if (t.length === 2) {
       const d = touchDistance(t[0], t[1]);
+      if (!config.pinchStartDist) return;
       const ratio = d / config.pinchStartDist;
-      config.scale = config.pinchStartScale / ratio;
+      config.scale = THREE.MathUtils.clamp(
+        config.pinchStartScale / ratio,
+        0.75,
+        1.35
+      );
       // Also pan
       const cx = (t[0].clientX + t[1].clientX) / 2;
       const cy = (t[0].clientY + t[1].clientY) / 2;
-      pan((cx - config.lastX) / w * 5, (cy - config.lastY) / h * 5);
-      config.lastX = cx;
-      config.lastY = cy;
+      pan((cx - config.lastTouchCenterX) / w * 5, (cy - config.lastTouchCenterY) / h * 5);
+      config.lastTouchCenterX = cx;
+      config.lastTouchCenterY = cy;
     }
   }
 
   function onTouchEnd() {
     config.isPointerDown = false;
     config.pointerButton = -1;
+    config.pinchStartDist = 0;
   }
 
   // ---------- Listeners ----------
@@ -208,13 +228,34 @@ export function initControls(camera, dom) {
   dom.addEventListener("touchstart", onTouchStart, { passive: false });
   dom.addEventListener("touchmove", onTouchMove, { passive: false });
   dom.addEventListener("touchend", onTouchEnd);
+  dom.addEventListener("touchcancel", onTouchEnd);
+
+  function resetView() {
+    config.target.set(0, 1.6, -2.5);
+    config.sphericalDelta.set(0, 0, 0);
+    config.scale = 1;
+    config.isPointerDown = false;
+    config.pointerButton = -1;
+    config.lastInteractionTime = performance.now();
+    camera.position.set(0, 2.4, 7.5);
+    const resetOffset = camera.position.clone().sub(config.target);
+    config.spherical.setFromVector3(resetOffset);
+  }
+
+  function onKeyDown(e) {
+    if (e.key.toLowerCase() === "r" && !e.target.closest?.("input, textarea, button, a")) {
+      resetView();
+    }
+  }
+
+  window.addEventListener("keydown", onKeyDown);
 
   // ---------- Update loop ----------
   function update(delta) {
     const spherical = config.spherical;
     const sphericalDelta = config.sphericalDelta;
 
-    // Auto-rotate when idle
+    // Auto-rotate is opt-in; it must never move the camera unexpectedly.
     if (config.autoRotate) {
       const idle = performance.now() - config.lastInteractionTime;
       if (idle > config.autoRotateDelay && !config.isPointerDown) {
@@ -281,5 +322,5 @@ export function initControls(camera, dom) {
     animate();
   }
 
-  return { update, focusOn, spherical: config.spherical, target: config.target };
+  return { update, focusOn, resetView, spherical: config.spherical, target: config.target };
 }
