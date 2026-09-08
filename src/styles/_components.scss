@@ -255,10 +255,24 @@
     color: $color-accent;
   }
   .brand-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    line-height: 1;
     background: linear-gradient(135deg, #fff 0%, $color-accent-soft 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+
+  .brand-logo {
+    width: 1em;
+    height: 1em;
+    flex: 0 0 1em;
+    display: block;
+    object-fit: contain;
+    border-radius: 50%;
+    -webkit-text-fill-color: initial;
   }
 }
 
