@@ -56,6 +56,31 @@ export function initModals(app, audio) {
     skillsGrid.appendChild(chip);
   });
 
+  // ---------- Inject certification cards ----------
+  const certificationsGrid = document.getElementById("certifications-grid");
+  data.certifications.forEach((certification) => {
+    const card = document.createElement("a");
+    card.className = `certification-card certification-${certification.accent || "violet"}`;
+    card.href = certification.url;
+    card.target = "_blank";
+    card.rel = "noopener noreferrer";
+    card.setAttribute("aria-label", `Open ${certification.name} certification`);
+    card.innerHTML = `
+      <div class="certification-quote" aria-hidden="true">\"</div>
+      <div class="certification-mark" aria-label="${escapeAttr(certification.issuer)} logo">
+        ${certification.logo
+          ? `<img src="${escapeAttr(certification.logo)}" alt="${escapeAttr(certification.issuer)} logo" />`
+          : escapeHtml(certification.mark || getCompanyMark(certification.issuer))}
+      </div>
+      <div class="certification-info">
+        <h4>${escapeHtml(certification.name)}</h4>
+        <p>${escapeHtml(certification.issuer)}</p>
+        <time datetime="${escapeAttr(certification.date)}">${escapeHtml(certification.date)}</time>
+      </div>
+    `;
+    certificationsGrid.appendChild(card);
+  });
+
   // ---------- Inject experience timeline ----------
   const timeline = document.getElementById("timeline");
   data.experience.forEach((item) => {

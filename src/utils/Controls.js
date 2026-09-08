@@ -12,10 +12,10 @@ export function initControls(camera, dom) {
     target: new THREE.Vector3(0, 1.6, -2.5),
 
     // Limits
-    minDistance: 3.0,
-    maxDistance: 12.0,
-    minPolarAngle: 0.25,                  // can't go above the ceiling
-    maxPolarAngle: Math.PI * 0.49,        // can't go under the floor
+    minDistance: 1.8,
+    maxDistance: 16.0,
+    minPolarAngle: 0.25, // can't go above the ceiling
+    maxPolarAngle: Math.PI * 0.49, // can't go under the floor
 
     // Damping
     enableDamping: true,
@@ -25,17 +25,18 @@ export function initControls(camera, dom) {
     rotateSpeed: 0.6,
     zoomSpeed: 0.8,
     panSpeed: 0.6,
+    zoomDamping: 0.16,
 
     // Auto-rotate when idle
     autoRotate: false,
     autoRotateSpeed: 0.25,
-    autoRotateDelay: 4000,                // ms of idle before auto-rotate kicks in
+    autoRotateDelay: 4000, // ms of idle before auto-rotate kicks in
 
     // State
     spherical: new THREE.Spherical(),
     sphericalDelta: new THREE.Spherical(),
     panOffset: new THREE.Vector3(),
-    scale: 1,
+    targetRadius: 0,
 
     // Mouse / touch state
     isPointerDown: false,
@@ -44,7 +45,7 @@ export function initControls(camera, dom) {
     lastY: 0,
     pointers: [],
     pinchStartDist: 0,
-    pinchStartScale: 1,
+    lastPinchDist: 0,
     lastTouchCenterX: 0,
     lastTouchCenterY: 0,
     lastInteractionTime: performance.now(),
@@ -53,6 +54,12 @@ export function initControls(camera, dom) {
   // Initialize spherical from camera position
   const offset = camera.position.clone().sub(config.target);
   config.spherical.setFromVector3(offset);
+  config.spherical.radius = THREE.MathUtils.clamp(
+    config.spherical.radius,
+    config.minDistance,
+    config.maxDistance,
+  );
+  config.targetRadius = config.spherical.radius;
 
   // ---------- Helpers ----------
   function rotateLeft(angle) {
@@ -62,10 +69,18 @@ export function initControls(camera, dom) {
     config.sphericalDelta.phi -= angle;
   }
   function dollyOut(dollyScale) {
-    config.scale /= dollyScale;
+    config.targetRadius *= dollyScale;
   }
   function dollyIn(dollyScale) {
-    config.scale *= dollyScale;
+    config.targetRadius /= dollyScale;
+  }
+  function applyZoomDelta(delta) {
+    config.targetRadius = THREE.MathUtils.clamp(
+      config.targetRadius + delta,
+      config.minDistance,
+      config.maxDistance,
+    );
+    config.lastInteractionTime = performance.now();
   }
   function pan(deltaX, deltaY) {
     const offset = new THREE.Vector3();
@@ -125,8 +140,8 @@ export function initControls(camera, dom) {
     } else {
       if (config.pointerButton === 0) {
         // Left button: orbit
-        rotateLeft((2 * Math.PI * dx) / w * config.rotateSpeed);
-        rotateUp((2 * Math.PI * dy) / h * config.rotateSpeed);
+        rotateLeft(((2 * Math.PI * dx) / w) * config.rotateSpeed);
+        rotateUp(((2 * Math.PI * dy) / h) * config.rotateSpeed);
       } else if (config.pointerButton === 2) {
         // Right button: pan
         pan((10 * dx) / w, (10 * dy) / h);
@@ -144,8 +159,10 @@ export function initControls(camera, dom) {
   function onWheel(e) {
     e.preventDefault();
     config.lastInteractionTime = performance.now();
-    if (e.deltaY < 0) dollyIn(1 + 0.1 * config.zoomSpeed);
-    else dollyOut(1 + 0.1 * config.zoomSpeed);
+    const lineHeight = 16;
+    const pixels = e.deltaMode === 1 ? e.deltaY * lineHeight : e.deltaY;
+    const normalized = THREE.MathUtils.clamp(pixels / 100, -2, 2);
+    applyZoomDelta(normalized * config.zoomSpeed * 0.85);
   }
 
   function onContextMenu(e) {
@@ -176,7 +193,7 @@ export function initControls(camera, dom) {
       config.isPointerDown = true;
       config.pointerButton = 1; // pinch/pan
       config.pinchStartDist = touchDistance(t[0], t[1]);
-      config.pinchStartScale = 1;
+      config.lastPinchDist = config.pinchStartDist;
       config.lastTouchCenterX = (t[0].clientX + t[1].clientX) / 2;
       config.lastTouchCenterY = (t[0].clientY + t[1].clientY) / 2;
     }
@@ -192,21 +209,21 @@ export function initControls(camera, dom) {
       const dy = t[0].clientY - config.lastY;
       config.lastX = t[0].clientX;
       config.lastY = t[0].clientY;
-      rotateLeft((2 * Math.PI * dx) / w * config.rotateSpeed);
-      rotateUp((2 * Math.PI * dy) / h * config.rotateSpeed);
+      rotateLeft(((2 * Math.PI * dx) / w) * config.rotateSpeed);
+      rotateUp(((2 * Math.PI * dy) / h) * config.rotateSpeed);
     } else if (t.length === 2) {
       const d = touchDistance(t[0], t[1]);
-      if (!config.pinchStartDist) return;
-      const ratio = d / config.pinchStartDist;
-      config.scale = THREE.MathUtils.clamp(
-        config.pinchStartScale / ratio,
-        0.75,
-        1.35
-      );
+      if (!config.lastPinchDist) return;
+      const pinchDelta = config.lastPinchDist - d;
+      applyZoomDelta(pinchDelta * 0.012 * config.zoomSpeed);
+      config.lastPinchDist = d;
       // Also pan
       const cx = (t[0].clientX + t[1].clientX) / 2;
       const cy = (t[0].clientY + t[1].clientY) / 2;
-      pan((cx - config.lastTouchCenterX) / w * 5, (cy - config.lastTouchCenterY) / h * 5);
+      pan(
+        ((cx - config.lastTouchCenterX) / w) * 5,
+        ((cy - config.lastTouchCenterY) / h) * 5,
+      );
       config.lastTouchCenterX = cx;
       config.lastTouchCenterY = cy;
     }
@@ -216,6 +233,7 @@ export function initControls(camera, dom) {
     config.isPointerDown = false;
     config.pointerButton = -1;
     config.pinchStartDist = 0;
+    config.lastPinchDist = 0;
   }
 
   // ---------- Listeners ----------
@@ -233,17 +251,20 @@ export function initControls(camera, dom) {
   function resetView() {
     config.target.set(0, 1.6, -2.5);
     config.sphericalDelta.set(0, 0, 0);
-    config.scale = 1;
     config.isPointerDown = false;
     config.pointerButton = -1;
     config.lastInteractionTime = performance.now();
     camera.position.set(0, 2.4, 7.5);
     const resetOffset = camera.position.clone().sub(config.target);
     config.spherical.setFromVector3(resetOffset);
+    config.targetRadius = config.spherical.radius;
   }
 
   function onKeyDown(e) {
-    if (e.key.toLowerCase() === "r" && !e.target.closest?.("input, textarea, button, a")) {
+    if (
+      e.key.toLowerCase() === "r" &&
+      !e.target.closest?.("input, textarea, button, a")
+    ) {
       resetView();
     }
   }
@@ -259,7 +280,7 @@ export function initControls(camera, dom) {
     if (config.autoRotate) {
       const idle = performance.now() - config.lastInteractionTime;
       if (idle > config.autoRotateDelay && !config.isPointerDown) {
-        const speed = (2 * Math.PI) / 60 / 60 * config.autoRotateSpeed;
+        const speed = ((2 * Math.PI) / 60 / 60) * config.autoRotateSpeed;
         rotateLeft(speed * (delta * 60));
       }
     }
@@ -273,15 +294,23 @@ export function initControls(camera, dom) {
     }
 
     // Limit polar
-    spherical.phi = Math.max(config.minPolarAngle, Math.min(config.maxPolarAngle, spherical.phi));
+    spherical.phi = Math.max(
+      config.minPolarAngle,
+      Math.min(config.maxPolarAngle, spherical.phi),
+    );
     spherical.makeSafe();
 
-    // Zoom
-    if (config.scale !== 1) {
-      spherical.radius *= config.scale;
-      config.scale = 1;
-    }
-    spherical.radius = Math.max(config.minDistance, Math.min(config.maxDistance, spherical.radius));
+    // Smoothly approach the requested zoom distance.
+    spherical.radius = THREE.MathUtils.lerp(
+      spherical.radius,
+      config.targetRadius,
+      1 - Math.pow(1 - config.zoomDamping, delta * 60),
+    );
+    spherical.radius = THREE.MathUtils.clamp(
+      spherical.radius,
+      config.minDistance,
+      config.maxDistance,
+    );
 
     // Compute new camera position
     const offset = new THREE.Vector3();
@@ -291,8 +320,8 @@ export function initControls(camera, dom) {
 
     // Decay deltas
     if (config.enableDamping) {
-      sphericalDelta.theta *= (1 - config.dampingFactor);
-      sphericalDelta.phi *= (1 - config.dampingFactor);
+      sphericalDelta.theta *= 1 - config.dampingFactor;
+      sphericalDelta.phi *= 1 - config.dampingFactor;
     } else {
       sphericalDelta.set(0, 0, 0);
     }
@@ -303,7 +332,7 @@ export function initControls(camera, dom) {
     const startPos = camera.position.clone();
     const startTarget = config.target.clone();
     const endTarget = new THREE.Vector3().fromArray(
-      Array.isArray(target) ? target : [target.x, target.y, target.z]
+      Array.isArray(target) ? target : [target.x, target.y, target.z],
     );
     const dir = startPos.clone().sub(startTarget).normalize();
     const endPos = endTarget.clone().add(dir.multiplyScalar(distance));
@@ -322,5 +351,11 @@ export function initControls(camera, dom) {
     animate();
   }
 
-  return { update, focusOn, resetView, spherical: config.spherical, target: config.target };
+  return {
+    update,
+    focusOn,
+    resetView,
+    spherical: config.spherical,
+    target: config.target,
+  };
 }
