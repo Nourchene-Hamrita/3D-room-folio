@@ -80,6 +80,7 @@ export function initModals(app, audio) {
     `;
     certificationsGrid.appendChild(card);
   });
+  setupScrollReveal(certificationsGrid, ".certification-card", "is-visible");
 
   // ---------- Inject experience timeline ----------
   const timeline = document.getElementById("timeline");
@@ -275,20 +276,24 @@ function getCompanyMark(company) {
 }
 
 function setupTimelineReveal(timeline) {
-  const items = Array.from(timeline.querySelectorAll(".timeline-item"));
+  setupScrollReveal(timeline, ".timeline-item", "is-visible");
+}
+
+function setupScrollReveal(container, selector, visibleClass) {
+  const items = Array.from(container.querySelectorAll(selector));
   if (!items.length) return;
 
   if (!("IntersectionObserver" in window)) {
-    items.forEach((item) => item.classList.add("is-visible"));
+    items.forEach((item) => item.classList.add(visibleClass));
     return;
   }
 
-  const scrollRoot = timeline.closest(".modal-body");
+  const scrollRoot = container.closest(".modal-body");
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
-        entry.target.classList.add("is-visible");
+        entry.target.classList.add(visibleClass);
         observer.unobserve(entry.target);
       });
     },
