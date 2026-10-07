@@ -1,6 +1,6 @@
 # 💜 Nourchene Hamrita — 3D Portfolio
 
-A futuristic, walk-around 3D developer workspace built with **Vite + Three.js + GSAP + Sass**, themed to match [your existing portfolio](https://nourchene-hamrita.netlify.app/) — dark + violet + pink neon.
+A futuristic, walk-around 3D developer workspace built with **Vite + Three.js + GSAP + Sass**.
 
 > Inspired by [andrewwoan/sooahs-room-folio](https://github.com/andrewwoan/sooahs-room-folio).
 
